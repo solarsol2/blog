@@ -1,0 +1,8 @@
+{
+  "name": "blog-oneclick-writer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "클릭만으로 정형화된 블로그 포스팅을 생성하는 웹 앱",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>블로그 원클릭 작성기</title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <script>
+    if (window.tailwind) tailwind.config = { theme: { extend: { fontFamily: { sans: ['Pretendard', 'system-ui', 'sans-serif'] } } } };
+  </script>
+  <style>
+    .chip[aria-checked='true'] .chip-check { opacity: 1; transform: scale(1); }
+    textarea { scrollbar-width: thin; }
+  </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased">
+  <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+      <h1 class="text-lg font-bold tracking-tight">✍️ 블로그 원클릭 작성기</h1>
+      <span id="modeBadge" class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">연결 확인 중…</span>
+    </div>
+  </header>
+
+  <main class="mx-auto grid max-w-6xl gap-6 px-4 py-6 pb-28 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:pb-10">
+    <!-- 입력 -->
+    <form id="form" class="space-y-6" autocomplete="off" novalidate>
+      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="mb-4 text-sm font-semibold text-slate-500">STEP 1 · 클릭으로 고르기</h2>
+        <div class="space-y-5" id="chipGroups"></div>
+      </section>
+
+      <section class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-sm font-semibold text-slate-500">STEP 2 · 핵심만 입력하기</h2>
+
+        <label class="block">
+          <span class="mb-1.5 flex items-center gap-1 text-sm font-semibold">대상/제품명 <span class="text-rose-500">*</span></span>
+          <input id="subject" type="text" maxlength="80" placeholder="예: 로지텍 MX Master 3S"
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-base outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
+        </label>
+
+        <label class="block">
+          <span class="mb-1.5 block text-sm font-semibold">필수 포함 키워드 <span class="font-normal text-slate-400">· 쉼표로 구분</span></span>
+          <input id="keywords" type="text" placeholder="예: 사무용 마우스 추천, 인체공학 마우스"
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-base outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
+          <div id="keywordPreview" class="mt-2 flex flex-wrap gap-1.5"></div>
+        </label>
+
+        <label class="block">
+          <span class="mb-1.5 block text-sm font-semibold">특별 요청사항 및 강조점 <span class="font-normal text-slate-400">· 선택</span></span>
+          <textarea id="extra" rows="4" placeholder="업체 가이드라인을 그대로 붙여넣거나, 꼭 강조할 소구점을 적어 주세요."
+            class="w-full resize-y rounded-xl border border-slate-300 px-4 py-3 text-base outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"></textarea>
+        </label>
+      </section>
+
+      <!-- 모바일: 하단 고정 / PC: 폼 하단 -->
+      <div class="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 p-3 backdrop-blur lg:static lg:border-0 lg:bg-transparent lg:p-0">
+        <button id="generateBtn" type="submit" disabled
+          class="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-4 text-base font-bold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none">
+          <span id="generateLabel">대상/제품명을 입력하세요</span>
+        </button>
+        <p class="mt-2 hidden text-center text-xs text-slate-400 lg:block">Ctrl / ⌘ + Enter 로도 생성할 수 있어요</p>
+      </div>
+    </form>
+
+    <!-- 결과 -->
+    <section id="resultPanel" class="flex min-h-[28rem] flex-col rounded-2xl border border-slate-200 bg-white shadow-sm lg:sticky lg:top-20 lg:h-[calc(100vh-7rem)]">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-3">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-500">STEP 3 · 결과</h2>
+          <p id="charCount" class="text-xs text-slate-400">아직 생성된 글이 없어요</p>
+        </div>
+        <div class="flex gap-2">
+          <button id="regenBtn" type="button" disabled
+            class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">🔄 다듬어 다시 생성</button>
+          <button id="copyBtn" type="button" disabled
+            class="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40">📋 원클릭 복사</button>
+        </div>
+      </div>
+
+      <div class="relative flex-1">
+        <textarea id="output" readonly placeholder="왼쪽에서 옵션을 고르고 '글 생성하기'를 누르면 여기에 결과가 나타나요."
+          class="absolute inset-0 h-full w-full resize-none bg-transparent p-5 text-[15px] leading-7 outline-none placeholder:text-slate-400"></textarea>
+        <div id="loading" class="absolute inset-0 hidden flex-col items-center justify-center gap-3 bg-white/85 backdrop-blur-sm">
+          <div class="h-10 w-10 animate-spin rounded-full border-4 border-indigo-100 border-t-indigo-600"></div>
+          <p id="loadingText" class="text-sm font-medium text-slate-600">글을 쓰고 있어요…</p>
+        </div>
+      </div>
+
+      <details class="border-t border-slate-100 px-5 py-3 text-sm">
+        <summary class="cursor-pointer select-none font-medium text-slate-500 hover:text-slate-700">🔍 조립된 프롬프트 보기</summary>
+        <pre id="promptView" class="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-600">옵션을 고르면 실시간으로 미리보기가 갱신돼요.</pre>
+      </details>
+    </section>
+  </main>
+
+  <div id="toast" class="pointer-events-none fixed left-1/2 top-20 z-50 -translate-x-1/2 -translate-y-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white opacity-0 shadow-lg transition"></div>
+
+  <script src="js/prompt.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
