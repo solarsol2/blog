@@ -5,56 +5,72 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>블로그 원클릭 작성기</title>
   <script src="https://cdn.tailwindcss.com/3.4.16"></script>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <script>
     if (window.tailwind) tailwind.config = { theme: { extend: { fontFamily: { sans: ['Pretendard', 'system-ui', 'sans-serif'] } } } };
   </script>
   <style>
-    .chip[aria-checked='true'] .chip-check { opacity: 1; transform: scale(1); }
     textarea { scrollbar-width: thin; }
+    details > summary { list-style: none; }
+    details > summary::-webkit-details-marker { display: none; }
+    details[open] .chev { transform: rotate(180deg); }
   </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 antialiased">
   <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur">
-    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+    <div class="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
       <h1 class="text-lg font-bold tracking-tight">✍️ 블로그 원클릭 작성기</h1>
-      <span id="modeBadge" class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">연결 확인 중…</span>
+      <div class="flex items-center gap-2">
+        <button id="resetBtn" type="button" class="rounded-full px-3 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100">옵션 초기화</button>
+        <span id="modeBadge" class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">연결 확인 중…</span>
+      </div>
     </div>
   </header>
 
-  <main class="mx-auto grid max-w-6xl gap-6 px-4 py-6 pb-28 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:pb-10">
+  <main class="mx-auto grid max-w-7xl gap-6 px-4 py-6 pb-28 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:pb-10">
     <!-- 입력 -->
-    <form id="form" class="space-y-6" autocomplete="off" novalidate>
+    <form id="form" class="space-y-5" autocomplete="off" novalidate>
       <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 class="mb-4 text-sm font-semibold text-slate-500">STEP 1 · 클릭으로 고르기</h2>
-        <div class="space-y-5" id="chipGroups"></div>
+        <h2 class="mb-4 text-sm font-semibold text-slate-500">STEP 1 · 기본 설정</h2>
+        <div class="space-y-5" data-step="basic"></div>
+      </section>
+
+      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="mb-4 text-sm font-semibold text-slate-500">STEP 2 · 내용 구성 <span class="font-normal text-slate-400">· 여러 개 선택 가능</span></h2>
+        <div class="space-y-5" data-step="content"></div>
       </section>
 
       <section class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 class="text-sm font-semibold text-slate-500">STEP 2 · 핵심만 입력하기</h2>
-
+        <h2 class="text-sm font-semibold text-slate-500">STEP 3 · 핵심 정보</h2>
         <label class="block">
           <span class="mb-1.5 flex items-center gap-1 text-sm font-semibold">대상/제품명 <span class="text-rose-500">*</span></span>
           <input id="subject" type="text" maxlength="80" placeholder="예: 로지텍 MX Master 3S"
             class="w-full rounded-xl border border-slate-300 px-4 py-3 text-base outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
         </label>
-
         <label class="block">
           <span class="mb-1.5 block text-sm font-semibold">필수 포함 키워드 <span class="font-normal text-slate-400">· 쉼표로 구분</span></span>
-          <input id="keywords" type="text" placeholder="예: 사무용 마우스 추천, 인체공학 마우스"
+          <input id="keywords" type="text" maxlength="300" placeholder="예: 사무용 마우스 추천, 인체공학 마우스"
             class="w-full rounded-xl border border-slate-300 px-4 py-3 text-base outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
           <div id="keywordPreview" class="mt-2 flex flex-wrap gap-1.5"></div>
         </label>
-
         <label class="block">
           <span class="mb-1.5 block text-sm font-semibold">특별 요청사항 및 강조점 <span class="font-normal text-slate-400">· 선택</span></span>
-          <textarea id="extra" rows="4" placeholder="업체 가이드라인을 그대로 붙여넣거나, 꼭 강조할 소구점을 적어 주세요."
+          <textarea id="extra" rows="3" maxlength="3000" placeholder="업체 가이드라인을 그대로 붙여넣거나, 위 선택지에 없는 것만 짧게 적어 주세요."
             class="w-full resize-y rounded-xl border border-slate-300 px-4 py-3 text-base outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"></textarea>
         </label>
       </section>
 
-      <!-- 모바일: 하단 고정 / PC: 폼 하단 -->
+      <details id="detailBox" class="group rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <summary class="flex cursor-pointer items-start justify-between gap-3 p-5">
+          <div class="min-w-0">
+            <h2 class="text-sm font-semibold text-slate-500">STEP 4 · 세부 옵션 <span class="font-normal text-slate-400">· 기본값으로도 충분해요</span></h2>
+            <p id="detailSummary" class="mt-1 truncate text-xs text-slate-400"></p>
+          </div>
+          <span class="chev mt-0.5 text-slate-400 transition">▾</span>
+        </summary>
+        <div class="space-y-5 border-t border-slate-100 p-5" data-step="detail"></div>
+      </details>
+
       <div class="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 p-3 backdrop-blur lg:static lg:border-0 lg:bg-transparent lg:p-0">
         <button id="generateBtn" type="submit" disabled
           class="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-4 text-base font-bold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none">
@@ -65,22 +81,22 @@
     </form>
 
     <!-- 결과 -->
-    <section id="resultPanel" class="flex min-h-[28rem] flex-col rounded-2xl border border-slate-200 bg-white shadow-sm lg:sticky lg:top-20 lg:h-[calc(100vh-7rem)]">
+    <section id="resultPanel" class="flex min-h-[36rem] flex-col rounded-2xl border border-slate-200 bg-white shadow-sm lg:sticky lg:top-20 lg:h-[calc(100vh-7rem)]">
       <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-3">
         <div>
-          <h2 class="text-sm font-semibold text-slate-500">STEP 3 · 결과</h2>
+          <h2 class="text-sm font-semibold text-slate-500">결과 <span id="versionLabel" class="ml-1 font-normal text-slate-400"></span></h2>
           <p id="charCount" class="text-xs text-slate-400">아직 생성된 글이 없어요</p>
         </div>
-        <div class="flex gap-2">
-          <button id="regenBtn" type="button" disabled
-            class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">🔄 다듬어 다시 생성</button>
+        <div class="flex items-center gap-1.5">
+          <button id="prevBtn" type="button" disabled title="이전 버전" class="rounded-lg border border-slate-300 px-2.5 py-2 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-30">◀</button>
+          <button id="nextBtn" type="button" disabled title="다음 버전" class="rounded-lg border border-slate-300 px-2.5 py-2 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-30">▶</button>
           <button id="copyBtn" type="button" disabled
             class="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40">📋 원클릭 복사</button>
         </div>
       </div>
 
-      <div class="relative flex-1">
-        <textarea id="output" readonly placeholder="왼쪽에서 옵션을 고르고 '글 생성하기'를 누르면 여기에 결과가 나타나요."
+      <div class="relative min-h-[16rem] flex-1">
+        <textarea id="output" readonly placeholder="왼쪽에서 옵션을 고르고 '글 생성하기'를 누르면 여기에 결과가 나타나요. 생성된 글은 여기서 바로 고칠 수도 있어요."
           class="absolute inset-0 h-full w-full resize-none bg-transparent p-5 text-[15px] leading-7 outline-none placeholder:text-slate-400"></textarea>
         <div id="loading" class="absolute inset-0 hidden flex-col items-center justify-center gap-3 bg-white/85 backdrop-blur-sm">
           <div class="h-10 w-10 animate-spin rounded-full border-4 border-indigo-100 border-t-indigo-600"></div>
@@ -88,9 +104,23 @@
         </div>
       </div>
 
+      <!-- 피드백 -->
+      <div id="feedbackBox" class="space-y-3 border-t border-slate-100 bg-slate-50/60 px-5 py-4">
+        <p class="text-sm font-semibold text-slate-600">결과가 아쉽다면? <span class="font-normal text-slate-400">· 클릭하거나 한두 줄만 적어 주세요</span></p>
+        <div id="feedbackChips" class="flex flex-wrap gap-1.5"></div>
+        <textarea id="feedback" rows="2" maxlength="400" placeholder="예: 두 번째 문단이 너무 광고 같아요. 출퇴근 때 쓴 얘기를 더 넣어 주세요."
+          class="w-full resize-none rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"></textarea>
+        <div class="flex gap-2">
+          <button id="reviseBtn" type="button" disabled
+            class="flex-1 rounded-lg bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300">✏️ 피드백 반영해 수정</button>
+          <button id="polishBtn" type="button" disabled
+            class="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">🔄 문장만 다듬기</button>
+        </div>
+      </div>
+
       <details class="border-t border-slate-100 px-5 py-3 text-sm">
         <summary class="cursor-pointer select-none font-medium text-slate-500 hover:text-slate-700">🔍 조립된 프롬프트 보기</summary>
-        <pre id="promptView" class="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-600">옵션을 고르면 실시간으로 미리보기가 갱신돼요.</pre>
+        <pre id="promptView" class="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-600"></pre>
       </details>
     </section>
   </main>

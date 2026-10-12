@@ -7,7 +7,15 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { validate, buildPrompt, buildRefinePrompt } = require('./js/prompt.js');
+const { validate, buildPrompt, buildRevisePrompt } = require('./js/prompt.js');
+
+// .env 파일이 있으면 읽어서 환경변수로 등록 (이미 설정된 값이 우선)
+try {
+  for (const line of fs.readFileSync(path.join(__dirname, '.env'), 'utf8').split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
+    if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^(['"])(.*)\1$/, '$2');
+  }
+} catch { /* .env 없음 */ }
 
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.ANTHROPIC_API_KEY;
@@ -42,10 +50,10 @@ async function callClaude({ system, user }) {
 async function handleGenerate(req, res) {
   if (!API_KEY) return sendJSON(res, 503, { error: 'ANTHROPIC_API_KEY가 설정되지 않았습니다.' });
   try {
-    const { form = {}, previousText } = await readBody(req);
+    const { form = {}, previousText, feedback } = await readBody(req);
     const errors = validate(form);
     if (errors.length) return sendJSON(res, 400, { error: errors[0] });
-    const prompt = previousText ? buildRefinePrompt(form, previousText) : buildPrompt(form);
+    const prompt = previousText ? buildRevisePrompt(form, String(previousText).slice(0, 20000), feedback) : buildPrompt(form);
     sendJSON(res, 200, { text: await callClaude(prompt) });
   } catch (err) {
     sendJSON(res, 500, { error: err.message });
