@@ -1,2 +1,12 @@
-node_modules/
+# 비밀 정보
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# 로그·산출물
+*.log
+*.png
+node_modules/
+.DS_Store

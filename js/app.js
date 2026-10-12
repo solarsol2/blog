@@ -184,9 +184,9 @@
     renderControls();
   }
 
-  function renderMode(info) {
-    const live = info.mode === 'live';
-    $('modeBadge').textContent = live ? `● LLM 연결됨 · ${info.model}` : '● 데모 모드 (더미 데이터)';
+  function renderMode() {
+    const live = state.mode === 'live';
+    $('modeBadge').textContent = live ? '● LLM 연결됨' : '● 데모 모드 (더미 데이터)';
     $('modeBadge').className = `rounded-full px-3 py-1 text-xs font-medium ${live ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`;
   }
 
@@ -211,7 +211,7 @@
     $('loadingText').textContent = { new: '글을 쓰고 있어요…', polish: '문맥은 그대로, 문장만 다듬는 중…', revise: '피드백을 반영하는 중…' }[kind];
     renderControls();
     try {
-      const { text } = await generatePost(form, { mode: state.mode, previousText: kind === 'new' ? null : current(), feedback });
+      const text = await generatePost(form, { mode: state.mode, previousText: kind === 'new' ? null : current(), feedback });
       // 이전 버전으로 돌아간 상태에서 새로 만들면 그 뒤 버전은 버림
       state.versions = state.versions.slice(0, state.vIndex + 1).concat(text);
       state.vIndex = state.versions.length - 1;
@@ -249,17 +249,6 @@
     $('form').addEventListener('input', (e) => {
       const key = e.target.dataset && e.target.dataset.custom;
       if (key) { state.custom[key] = e.target.value; save(); refresh(); }
-    });
-    // 단일 선택 그룹: 방향키로 이동
-    $('form').addEventListener('keydown', (e) => {
-      if (!['ArrowRight', 'ArrowLeft'].includes(e.key) || !e.target.matches('[role=radio]')) return;
-      const btns = [...e.target.parentElement.querySelectorAll('button')];
-      const next = btns[(btns.indexOf(e.target) + (e.key === 'ArrowRight' ? 1 : -1) + btns.length) % btns.length];
-      e.preventDefault();
-      const key = e.target.closest('[data-group]').dataset.group;
-      selectChip(key, next.dataset.value);
-      const again = document.querySelector(`[data-group="${key}"] [data-value="${next.dataset.value}"]`);
-      if (again && next.dataset.value !== CUSTOM) again.focus();
     });
 
     ['subject', 'keywords', 'extra'].forEach((id) => $(id).addEventListener('input', () => {
@@ -302,9 +291,8 @@
     bind();
     renderResult();
     refresh();
-    const info = await detectMode();
-    state.mode = info.mode;
-    renderMode(info);
+    state.mode = await detectMode();
+    renderMode();
   }
 
   init();

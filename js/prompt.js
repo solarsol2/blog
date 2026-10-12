@@ -232,7 +232,6 @@
   const clean = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
   const splitList = (raw) =>
     String(raw || '').split(/[,，\n]/).map((k) => k.trim()).filter(Boolean).filter((k, i, a) => a.indexOf(k) === i);
-  const parseKeywords = splitList;
   const asList = (lines) => [].concat(lines).filter(Boolean).map((l) => `- ${l}`).join('\n');
   const slug = (s) => 'p_' + Array.from(s).map((c) => c.charCodeAt(0).toString(36)).join('');
 
@@ -410,6 +409,6 @@ ${String(previousText || '').trim()}
 
   return {
     CUSTOM, LIMITS, GROUPS, FEEDBACK_LABELS,
-    optionsFor, presetFor, defaultSelection, resolve, parseKeywords, validate, buildPrompt, buildRevisePrompt,
+    optionsFor, presetFor, defaultSelection, resolve, parseKeywords: splitList, validate, buildPrompt, buildRevisePrompt,
   };
 });

@@ -4,19 +4,17 @@
  */
 (function (root) {
   'use strict';
-  const { resolve, parseKeywords, buildPrompt, buildRevisePrompt } = root.PromptBuilder;
+  const { resolve, parseKeywords } = root.PromptBuilder;
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   async function detectMode() {
-    if (location.protocol === 'file:') return { mode: 'mock' };
+    if (location.protocol === 'file:') return 'mock';
     try {
       const res = await fetch('/api/health', { cache: 'no-store' });
-      if (!res.ok) return { mode: 'mock' };
-      const data = await res.json();
-      return { mode: data.ready ? 'live' : 'mock', model: data.model };
+      return res.ok && (await res.json()).ready ? 'live' : 'mock';
     } catch {
-      return { mode: 'mock' };
+      return 'mock';
     }
   }
 
@@ -79,17 +77,13 @@
   }
 
   /**
-   * 생성 요청. opts: { mode: 'live'|'mock', previousText?, feedback?: {chips, text} }
+   * 생성 요청 → 결과 텍스트. opts: { mode: 'live'|'mock', previousText?, feedback?: {chips, text} }
    * previousText가 있으면 수정 모드(피드백 없으면 문장 다듬기).
    */
   async function generatePost(form, { mode, previousText, feedback } = {}) {
-    const prompt = previousText ? buildRevisePrompt(form, previousText, feedback) : buildPrompt(form);
-    if (mode === 'live') {
-      const text = await callServer({ form, previousText: previousText || null, feedback: feedback || null });
-      return { text, prompt };
-    }
+    if (mode === 'live') return callServer({ form, previousText: previousText || null, feedback: feedback || null });
     await sleep(800 + Math.random() * 600);
-    return { text: previousText ? mockRevise(previousText, feedback) : DEMO_NOTICE + mockText(form), prompt };
+    return previousText ? mockRevise(previousText, feedback) : DEMO_NOTICE + mockText(form);
   }
 
   root.BlogAPI = { detectMode, generatePost };

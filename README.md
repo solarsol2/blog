@@ -22,6 +22,12 @@ npm start                   # → http://localhost:3000
 | `js/prompt.js` | 옵션 정의 + 프롬프트 조립(신규/수정). 브라우저·Node 공용 단일 출처 |
 | `js/api.js` | `/api/health`로 모드 감지 → 실 API 또는 Mock |
 | `js/app.js` | 상태·렌더링·이벤트 |
-| `server.js` | 무의존성 Node 서버: 정적 서빙, `.env` 로드, 서버측 프롬프트 조립, Claude 호출 |
+| `server.js` | 무의존성 Node 서버: 허용 파일 서빙, `.env` 로드, 서버측 프롬프트 조립, Claude 호출 |
 
-환경변수: `ANTHROPIC_API_KEY`, `CLAUDE_MODEL`(기본 `claude-sonnet-5-5`), `PORT`.
+환경변수: `ANTHROPIC_API_KEY`, `CLAUDE_MODEL`(기본 `claude-sonnet-5-5`), `PORT`, `HOST`(기본 `127.0.0.1`).
+
+## 보안
+- API 키는 `.env`(git 제외)에만 두고 서버에서만 사용 — 브라우저로 내려가지 않음
+- 서버는 기본적으로 `127.0.0.1`에만 열림(같은 네트워크의 다른 기기가 내 키로 호출 불가)
+- 허용된 4개 파일만 서빙(`.env`, `server.js` 등 접근 불가), 요청 크기 64KB 제한
+- 요청·응답 내용은 서버에 로그로 남기지 않음, 외부 API 오류 상세는 클라이언트에 노출하지 않음
